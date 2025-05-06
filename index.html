@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赛博深渊：极限挑战</title>
+    <style>
+        :root {
+            --neon-blue: #0ff0fc;
+            --neon-pink: #ff2a6d;
+            --neon-purple: #9d00ff;
+            --neon-green: #00ff9d;
+            --neon-yellow: #f0ff00;
+            --dark-bg: #0a0a20;
+            --panel-bg: rgba(10, 10, 30, 0.8);
+        }
+        body {
+            background: var(--dark-bg);
+            color: white;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 10px;
+        }
+        .cyber-panel {
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-pink);
+            background: var(--panel-bg);
+            padding: 1rem;
+            margin: 1rem 0;
+            position: relative;
+            border-radius: 5px;
+        }
+        .cyber-panel::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+        }
+        .resource {
+            display: inline-block;
+            margin: 0 1rem;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+        button {
+            background: black;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+            border-radius: 3px;
+        }
+        button:hover {
+            background: var(--neon-blue);
+            color: black;
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #game-over {
+            display: none;
+            color: var(--neon-pink);
+            font-size: 2rem;
+            text-align: center;
+            animation: glitch 1s linear infinite;
+        }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 var(--neon-blue); }
+            20% { text-shadow: -2px 0 var(--neon-pink); }
+            40% { text-shadow: 2px 0 var(--neon-purple); }
+            60% { text-shadow: -2px 0 var(--neon-blue); }
+            80% { text-shadow: 2px 0 var(--neon-pink); }
+            100% { text-shadow: -2px 0 var(--neon-purple); }
+        }
+        .progress-bar {
+            height: 20px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--neon-blue);
+            margin: 10px 0;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .event-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            background: var(--dark-bg);
+            border: 2px solid var(--neon-pink);
+            padding: 20px;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+        .tech-tree {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .tech-item {
+            border: 1px solid var(--neon-purple);
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tech-item:hover {
+            box-shadow: 0 0 10px var(--neon-purple);
+        }
+        .tech-item.unlocked {
+            border-color: var(--neon-blue);
+            background: rgba(15, 240, 252, 0.1);
+        }
+        .tech-item.locked {
+            opacity: 0.5;
+        }
+        #hack-code {
+            font-size: 2rem;
+            letter-spacing: 5px;
+            margin: 20px 0;
+            color: var(--neon-pink);
+        }
+        #hack-input {
+            background: black;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 10px;
+            font-size: 1.2rem;
+            width: 200px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+        .tab-container {
+            display: flex;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid var(--neon-blue);
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .tab.active {
+            background: var(--neon-blue);
+            color: black;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .upgrade {
+            border: 1px solid var(--neon-blue);
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+        }
+        .upgrade:hover {
+            background: rgba(15, 240, 252, 0.1);
+        }
+        .upgrade.unlocked {
+            border-color: var(--neon-pink);
+        }
+        .upgrade.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .achievement {
+            border: 1px solid var(--neon-purple);
+            padding: 10px;
+            margin: 5px 0;
+            opacity: 0.5;
+        }
+        .achievement.unlocked {
+            opacity: 1;
+            box-shadow: 0 0 10px var(--neon-purple);
+        }
+        .mission {
+            border: 1px solid var(--neon-green);
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .mission.completed {
+            border-color: var(--neon-yellow);
+            background: rgba(240, 255, 0, 0.1);
+        }
+        .mission.reward {
+            color: var(--neon-green);
+        }
+        .cybernetics-item {
+            border: 1px solid var(--neon-purple);
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .cybernetics-item.active {
+            border-color: var(--neon-green);
+            background: rgba(0, 255, 157, 0.1);
+        }
+        #virus-scan {
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(90deg, red, yellow, green);
+            position: relative;
+        }
+        #virus-scan-pointer {
+            position: absolute;
+            top: -5px;
+            width: 2px;
+            height: 30px;
+            background: white;
+            left: 0;
+        }
+        .corporation {
+            border: 1px solid var(--neon-blue);
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .corporation.unlocked {
+            border-color: var(--neon-green);
+        }
+        #minigame-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        #code-minigame {
+            background: var(--dark-bg);
+            border: 2px solid var(--neon-blue);
+            padding: 20px;
+            text-align: center;
+        }
+        .code-line {
+            font-family: monospace;
+            text-align: left;
+            margin: 5px 0;
+        }
+        .code-line.error {
+            color: var(--neon-pink);
+        }
+        #cyberspace-view {
+            width: 100%;
+            height: 200px;
+            background: black;
+            border: 1px solid var(--neon-blue);
+            position: relative;
+            overflow: hidden;
+        }
+        .data-node {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+        }
+        .data-link {
+            position: absolute;
+            height: 1px;
+            background: rgba(15, 240, 252, 0.3);
+            transform-origin: 0 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-over">
+        <h1>系统崩溃</h1>
+        <p>你的赛博帝国已经瓦解...</p>
+        <button onclick="resetGame()">重建系统</button>
+    </div>
+
+    <div class="event-panel" id="hack-event">
+        <h2>黑客入侵!</h2>
+        <p>快速输入以下代码阻止数据泄露:</p>
+        <div id="hack-code">XXXXXX</div>
+        <input type="text" id="hack-input" maxlength="6">
+        <p id="hack-timer">剩余时间: 10秒</p>
+        <button onclick="resolveHack(true)">确认</button>
+    </div>
+
+    <div class="event-panel" id="overload-event">
+        <h2>系统过载!</h2>
+        <p>你的算力使用已达到危险水平!</p>
+        <div class="progress-bar">
+            <div class="progress-fill" id="overload-bar"></div>
+        </div>
+        <p>快速点击降温按钮防止系统崩溃!</p>
+        <button onclick="coolSystem()">紧急降温</button>
+        <p id="overload-timer">倒计时: 10秒</p>
+    </div>
+
+    <div class="event-panel" id="virus-event">
+        <h2>病毒检测!</h2>
+        <p>系统检测到恶意软件感染!</p>
+        <div id="virus-scan">
+            <div id="virus-scan-pointer"></div>
+        </div>
+        <p>在扫描指针到达绿色区域时点击清除病毒!</p>
+        <button onclick="scanVirus()">扫描清除</button>
+        <p id="virus-timer">倒计时: 15秒</p>
+    </div>
+
+    <div id="minigame-container">
+        <div id="code-minigame">
+            <h2>紧急修复</h2>
+            <div id="code-display"></div>
+            <p>找出以下代码中的错误行:</p>
+            <div id="code-errors"></div>
+            <button onclick="closeMinigame()">完成修复</button>
+        </div>
+    </div>
+
+    <h1 style="text-align: center; text-shadow: 0 0 10px var(--neon-blue);">赛博深渊：极限挑战</h1>
+
+    <div class="tab-container">
+        <div class="tab active" onclick="switchTab('main')">主控台</div>
+        <div class="tab" onclick="switchTab('tech')">科技树</div>
+        <div class="tab" onclick="switchTab('upgrades')">升级</div>
+        <div class="tab" onclick="switchTab('achievements')">成就</div>
+        <div class="tab" onclick="switchTab('missions')">任务</div>
+        <div class="tab" onclick="switchTab('cybernetics')">义体改造</div>
+        <div class="tab" onclick="switchTab('corporations')">企业</div>
+        <div class="tab" onclick="switchTab('cyberspace')">赛博空间</div>
+    </div>
+
+    <div class="tab-content active" id="main-tab">
+        <div class="cyber-panel">
+            <h2>资源监控</h2>
+            <div>
+                <span class="resource">能源: <span id="energy">0</span></span>
+                <span class="resource">数据碎片: <span id="data">0</span></span>
+                <span class="resource">算力: <span id="compute">0</span>/<span id="max-compute">100</span></span>
+                <span class="resource">信用点: <span id="credits">0</span></span>
+                <span class="resource">声望: <span id="reputation">0</span></span>
+                <span class="resource">生物芯片: <span id="biochips">0</span></span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="compute-bar"></div>
+            </div>
+            <p>系统稳定性: <span id="stability">100</span>%</p>
+            <p>网络影响力: <span id="influence">0</span></p>
+            <p>游戏时间: <span id="play-time">0</span>秒</p>
+        </div>
+
+        <div class="cyber-panel">
+            <h2>核心设施</h2>
+            <button onclick="buyGenerator()">建造能源发生器 (消耗: 50信用点)</button>
+            <button onclick="buyDataCenter()">建造数据中心 (消耗: 100信用点)</button>
+            <button onclick="buyQuantumComputer()">建造量子计算机 (消耗: 500信用点)</button>
+            <button onclick="buyFirewall()">升级防火墙 (消耗: 200数据碎片)</button>
+            <button onclick="buyBiochipLab()">建造生物芯片实验室 (消耗: 1000信用点)</button>
+            <button onclick="buyInfluenceNode()">部署影响力节点 (消耗: 500信用点 + 200数据碎片)</button>
+            
+            <div style="margin-top: 20px;">
+                <h3>自动化设置</h3>
+                <label>
+                    <input type="checkbox" id="auto-energy"> 自动分配能源
+                </label>
+                <label>
+                    <input type="checkbox" id="auto-data"> 自动分析数据
+                </label>
+                <label>
+                    <input type="checkbox" id="auto-biochips"> 自动生产生物芯片
+                </label>
+            </div>
+        </div>
+
+        <div class="cyber-panel">
+            <h2>行动</h2>
+            <button onclick="harvestEnergy()">收集能源</button>
+            <button onclick="mineData()">挖掘数据</button>
+            <button onclick="runComputation()">执行计算</button>
+            <button onclick="sellData()">出售数据 (10数据碎片 = 1信用点)</button>
+            <button onclick="buyCredits()">黑市交易 (高风险)</button>
+            <button onclick="launchDDoS()">发起DDoS攻击 (需要影响力)</button>
+            <button onclick="startVirusScan()">运行病毒扫描</button>
+            <button onclick="enterCyberspace()">进入赛博空间</button>
+        </div>
+
+        <div class="cyber-panel">
+            <h2>日志</h2>
+            <div id="log" style="height: 100px; overflow-y: scroll; border: 1px solid var(--neon-blue); padding: 5px;">
+                <p>系统启动... 欢迎来到赛博深渊</p>
+            </div>
+            <button onclick="clearLog()">清除日志</button>
+            <button onclick="exportSave()">导出存档</button>
+            <input type="file" id="import-save" style="display: none;" accept=".json">
+            <button onclick="document.getElementById('import-save').click()">导入存档</button>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tech-tab">
+        <div class="cyber-panel">
+            <h2>科技树</h2>
+            <p>研究点数: <span id="research-points">0</span></p>
+            <div class="tech-tree">
+                <div class="tech-item locked" id="tech-ai" onclick="researchTech('ai')">
+                    <h3>基础AI</h3>
+                    <p>解锁自动化功能</p>
+                    <p>需求: 10研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-quantum" onclick="researchTech('quantum')">
+                    <h3>量子计算</h3>
+                    <p>算力上限+200%</p>
+                    <p>稳定性-20%</p>
+                    <p>需求: 25研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-neural" onclick="researchTech('neural')">
+                    <h3>神经链接</h3>
+                    <p>资源获取速度+50%</p>
+                    <p>黑客风险+30%</p>
+                    <p>需求: 20研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-darkweb" onclick="researchTech('darkweb')">
+                    <h3>暗网接入</h3>
+                    <p>解锁黑市交易</p>
+                    <p>系统风险+40%</p>
+                    <p>需求: 15研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-nanotech" onclick="researchTech('nanotech')">
+                    <h3>纳米科技</h3>
+                    <p>设施效率+30%</p>
+                    <p>维护成本+50%</p>
+                    <p>需求: 40研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-singularity" onclick="researchTech('singularity')">
+                    <h3>技术奇点</h3>
+                    <p>解锁终极能力</p>
+                    <p>系统极度不稳定</p>
+                    <p>需求: 100研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-biotech" onclick="researchTech('biotech')">
+                    <h3>生物科技</h3>
+                    <p>解锁生物芯片生产</p>
+                    <p>需求: 30研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-cyberwar" onclick="researchTech('cyberwar')">
+                    <h3>网络战争</h3>
+                    <p>解锁DDoS攻击</p>
+                    <p>需求: 35研究点数</p>
+                </div>
+                <div class="tech-item locked" id="tech-virtual" onclick="researchTech('virtual')">
+                    <h3>虚拟现实</h3>
+                    <p>解锁赛博空间</p>
+                    <p>需求: 45研究点数</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="upgrades-tab">
+        <div class="cyber-panel">
+            <h2>设施升级</h2>
+            <div class="upgrade locked" id="upgrade-gen1" onclick="buyUpgrade('gen1')">
+                <h3>能源发生器 Mk.II</h3>
+                <p>能源产出+50%</p>
+                <p>成本: 200信用点</p>
+            </div>
+            <div class="upgrade locked" id="upgrade-data1" onclick="buyUpgrade('data1')">
+                <h3>数据中心 Mk.II</h3>
+                <p>数据处理+50%</p>
+                <p>成本: 300信用点</p>
+            </div>
+            <div class="upgrade locked" id="upgrade-quant1" onclick="buyUpgrade('quant1')">
+                <h3>量子优化</h3>
+                <p>算力效率+30%</p>
+                <p>成本: 500信用点</p>
+            </div>
+            <div class="upgrade locked" id="upgrade-firewall1" onclick="buyUpgrade('firewall1')">
+                <h3>高级防火墙</h3>
+                <p>黑客风险-40%</p>
+                <p>成本: 400数据碎片</p>
+            </div>
+            <div class="upgrade locked" id="upgrade-bio1" onclick="buyUpgrade('bio1')">
+                <h3>生物芯片优化</h3>
+                <p>生物芯片生产+50%</p>
+                <p>成本: 600信用点</p>
+            </div>
+            <div class="upgrade locked" id="upgrade-influence1" onclick="buyUpgrade('influence1')">
+                <h3>影响力放大器</h3>
+                <p>影响力获取+50%</p>
+                <p>成本: 800信用点</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="achievements-tab">
+        <div class="cyber-panel">
+            <h2>成就系统</h2>
+            <div class="achievement" id="achieve-start">
+                <h3>初次启动</h3>
+                <p>启动你的第一个设施</p>
+            </div>
+            <div class="achievement" id="achieve-hack">
+                <h3>防火墙测试</h3>
+                <p>成功抵御一次黑客攻击</p>
+            </div>
+            <div class="achievement" id="achieve-overload">
+                <h3>冷静应对</h3>
+                <p>防止系统过载崩溃</p>
+            </div>
+            <div class="achievement" id="achieve-quantum">
+                <h3>量子跃迁</h3>
+                <p>研究量子计算技术</p>
+            </div>
+            <div class="achievement" id="achieve-singularity">
+                <h3>奇点临近</h3>
+                <p>达到技术奇点</p>
+            </div>
+            <div class="achievement" id="achieve-bio">
+                <h3>生化电子人</h3>
+                <p>生产100个生物芯片</p>
+            </div>
+            <div class="achievement" id="achieve-ddos">
+                <h3>网络恐怖分子</h3>
+                <p>发起10次DDoS攻击</p>
+            </div>
+            <div class="achievement" id="achieve-virus">
+                <h3>杀毒专家</h3>
+                <p>清除5次病毒</p>
+            </div>
+            <div class="achievement" id="achieve-cyberspace">
+                <h3>数字幽灵</h3>
+                <p>进入赛博空间10次</p>
+            </div>
+            <div class="achievement" id="achieve-time">
+                <h3>时间领主</h3>
+                <p>游戏时间超过1小时</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="missions-tab">
+        <div class="cyber-panel">
+            <h2>任务系统</h2>
+            <div class="mission" id="mission-start">
+                <h3>新手入门</h3>
+                <p>建造第一个能源发生器</p>
+                <p class="reward">奖励: 50信用点</p>
+            </div>
+            <div class="mission" id="mission-research">
+                <h3>科研先锋</h3>
+                <p>研究3项科技</p>
+                <p class="reward">奖励: 20研究点数</p>
+            </div>
+            <div class="mission" id="mission-hack">
+                <h3>网络安全</h3>
+                <p>成功抵御黑客攻击</p>
+                <p class="reward">奖励: 防火墙升级</p>
+            </div>
+            <div class="mission" id="mission-bio">
+                <h3>生物黑客</h3>
+                <p>生产50个生物芯片</p>
+                <p class="reward">奖励: 生物科技研究点数</p>
+            </div>
+            <div class="mission" id="mission-ddos">
+                <h3>网络战争</h3>
+                <p>发起5次DDoS攻击</p>
+                <p class="reward">奖励: 影响力+100</p>
+            </div>
+            <div class="mission" id="mission-stability">
+                <h3>系统稳定</h3>
+                <p>保持系统稳定性>80%持续5分钟</p>
+                <p class="reward">奖励: 稳定性+10%</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="cybernetics-tab">
+        <div class="cyber-panel">
+            <h2>义体改造</h2>
+            <p>生物芯片: <span id="biochips-cyber">0</span></p>
+            <div class="cybernetics-item" id="cyber-neural" onclick="installCyberware('neural')">
+                <h3>神经加速器</h3>
+                <p>提升所有操作速度20%</p>
+                <p>消耗: 10生物芯片</p>
+            </div>
+            <div class="cybernetics-item" id="cyber-memory" onclick="installCyberware('memory')">
+                <h3>记忆增强器</h3>
+                <p>研究点数获取+30%</p>
+                <p>消耗: 15生物芯片</p>
+            </div>
+            <div class="cybernetics-item" id="cyber-reflex" onclick="installCyberware('reflex')">
+                <h3>反射增强器</h3>
+                <p>事件反应时间+2秒</p>
+                <p>消耗: 20生物芯片</p>
+            </div>
+            <div class="cybernetics-item" id="cyber-stability" onclick="installCyberware('stability')">
+                <h3>系统稳定器</h3>
+                <p>系统稳定性+15%</p>
+                <p>消耗: 25生物芯片</p>
+            </div>
+            <div class="cybernetics-item" id="cyber-ai" onclick="installCyberware('ai')">
+                <h3>AI协同处理器</h3>
+                <p>自动化效率+40%</p>
+                <p>消耗: 50生物芯片</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="corporations-tab">
+        <div class="cyber-panel">
+            <h2>企业关系</h2>
+            <p>声望: <span id="reputation-corps">0</span></p>
+            <div class="corporation" id="corp-neura">
+                <h3>NeuraLink科技</h3>
+                <p>神经技术专家</p>
+                <p>解锁需求: 500声望</p>
+                <button onclick="unlockCorporation('neura')">建立联系</button>
+            </div>
+            <div class="corporation" id="corp-quant">
+                <h3>Quantum Dynamics</h3>
+                <p>量子计算先驱</p>
+                <p>解锁需求: 800声望</p>
+                <button onclick="unlockCorporation('quant')">建立联系</button>
+            </div>
+            <div class="corporation" id="corp-cyber">
+                <h3>CyberSys安全</h3>
+                <p>网络安全巨头</p>
+                <p>解锁需求: 1200声望</p>
+                <button onclick="unlockCorporation('cyber')">建立联系</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="cyberspace-tab">
+        <div class="cyber-panel">
+            <h2>赛博空间</h2>
+            <p>网络影响力: <span id="influence-cyber">0</span></p>
+            <div id="cyberspace-view"></div>
+            <button onclick="exploreCyberspace()">探索数据节点</button>
+            <button onclick="hackCorporation()">入侵企业网络</button>
+            <button onclick="defendNode()">防御网络节点</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const game = {
+            resources: {
+                energy: 0,
+                data: 0,
+                compute: 0,
+                maxCompute: 100,
+                credits: 50,
+                research: 0,
+                reputation: 0,
+                biochips: 0,
+                influence: 0
+            },
+            facilities: {
+                generators: 0,
+                dataCenters: 0,
+                quantumComputers: 0,
+                firewalls: 0,
+                biochipLabs: 0,
+                influenceNodes: 0
+            },
+            rates: {
+                energy: 0,
+                data: 0,
+                compute: 0,
+                biochips: 0,
+                influence: 0
+            },
+            upgrades: {
+                gen1: false,
+                data1: false,
+                quant1: false,
+                firewall1: false,
+                bio1: false,
+                influence1: false
+            },
+            tech: {
+                ai: false,
+                quantum: false,
+                neural: false,
+                darkweb: false,
+                nanotech: false,
+                singularity: false,
+                biotech: false,
+                cyberwar: false,
+                virtual: false
+            },
+            cybernetics: {
+                neural: false,
+                memory: false,
+                reflex: false,
+                stability: false,
+                ai: false
+            },
+            corporations: {
+                neura: false,
+                quant: false,
+                cyber: false
+            },
+            missions: {
+                start: false,
+                research: false,
+                hack: false,
+                bio: false,
+                ddos: false,
+                stability: false
+            },
+            achievements: {
+                start: false,
+                hack: false,
+                overload: false,
+                quantum: false,
+                singularity: false,
+                bio: false,
+                ddos: false,
+                virus: false,
+                cyberspace: false,
+                time: false
+            },
+            stats: {
+                playTime: 0,
+                hackDefended: 0,
+                overloadPrevented: 0,
+                virusesCleaned: 0,
+                ddosLaunched: 0,
+                cyberspaceEntered: 0,
+                lastStabilityCheck: 0
+            },
+            stability: 100,
+            lastUpdate: Date.now(),
+            hackActive: false,
+            overloadActive: false,
+            virusActive: false,
+            minigameActive: false,
+            hackTime: 0,
+            overloadTime: 0,
+            virusTime: 0,
+            gameOver: false,
+            cyberspaceNodes: [],
+            cyberspaceLinks: []
+        };
+
+        // 加载游戏
+        function loadGame() {
+            const saved = localStorage.getItem('cyberAbyss');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    Object.assign(game, parsed);
+                    updateUI();
+                    addLog("游戏加载完成");
+                } catch (e) {
+                    addLog("存档损坏，创建新游戏");
+                }
+            }
+        }
+
+        // 保存游戏
+        function saveGame() {
+            localStorage.setItem('cyberAbyss', JSON.stringify(game));
+        }
+
+        // 导出存档
+        function exportSave() {
+            const data = JSON.stringify(game);
+            const blob = new Blob([data], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `cyber-abyss-save-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            addLog("存档已导出");
+        }
+
+        // 导入存档
+        document.getElementById('import-save').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    Object.assign(game, data);
+                    updateUI();
+                    saveGame();
+                    addLog("存档已导入");
+                } catch (err) {
+                    addLog("导入失败: 存档文件损坏");
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // 重置游戏
+        function resetGame() {
+            if (confirm("确定要重置游戏吗？所有进度将丢失！")) {
+                localStorage.removeItem('cyberAbyss');
+                location.reload();
+            }
+        }
+
+        // 更新UI
+        function updateUI() {
+            // 资源显示
+            document.getElementById('energy').textContent = Math.floor(game.resources.energy);
+            document.getElementById('data').textContent = Math.floor(game.resources.data);
+            document.getElementById('compute').textContent = Math.floor(game.resources.compute);
+            document.getElementById('max-compute').textContent = game.resources.maxCompute;
+            document.getElementById('credits').textContent = Math.floor(game.resources.credits);
+            document.getElementById('research-points').textContent = Math.floor(game.resources.research);
+            document.getElementById('reputation').textContent = Math.floor(game.resources.reputation);
+            document.getElementById('biochips').textContent = Math.floor(game.resources.biochips);
+            document.getElementById('influence').textContent = Math.floor(game.resources.influence);
+            document.getElementById('stability').textContent = Math.floor(game.stability);
+            document.getElementById('play-time').textContent = Math.floor(game.stats.playTime / 60);
+            
+            // 进度条
+            const computePercent = (game.resources.compute / game.resources.maxCompute) * 100;
+            document.getElementById('compute-bar').style.width = `${computePercent}%`;
+            
+            // 设施状态
+            document.getElementById('auto-energy').checked = game.tech.ai;
+            document.getElementById('auto-data').checked = game.tech.ai;
+            document.getElementById('auto-biochips').checked = game.tech.biotech;
+            
+            // 科技树
+            updateTechTree();
+            
+            // 升级
+            updateUpgrades();
+            
+            // 成就
+            updateAchievements();
+            
+            // 任务
+            updateMissions();
+            
+            // 义体改造
+            updateCybernetics();
+            
+            // 企业关系
+            updateCorporations();
+            
+            // 赛博空间
+            updateCyberspace();
+            
+            // 游戏状态
+            if (game.gameOver) {
+                document.getElementById('game-over').style.display = 'block';
+            } else {
+                document.getElementById('game-over').style.display = 'none';
+            }
+        }
+
+        // 更新科技树
+        function updateTechTree() {
+            const techItems = ['ai', 'quantum', 'neural', 'darkweb', 'nanotech', 'singularity', 'biotech', 'cyberwar', 'virtual'];
+            techItems.forEach(tech => {
+                const element = document.getElementById(`tech-${tech}`);
+                if (game.tech[tech]) {
+                    element.classList.add('unlocked');
+                    element.classList.remove('locked');
+                } else {
+                    element.classList.remove('unlocked');
+                    // 检查是否满足研究条件
+                    const canResearch = canResearchTech(tech);
+                    element.classList.toggle('locked', !canResearch);
+                }
+            });
+        }
+
+        // 检查是否可以研究科技
+        function canResearchTech(tech) {
+            const requirements = {
+                ai: game.resources.research >= 10,
+                quantum: game.resources.research >= 25,
+                neural: game.resources.research >= 20,
+                darkweb: game.resources.research >= 15,
+                nanotech: game.resources.research >= 40 && game.tech.ai && game.tech.neural,
+                singularity: game.resources.research >= 100 && game.tech.quantum && game.tech.nanotech,
+                biotech: game.resources.research >= 30,
+                cyberwar: game.resources.research >= 35 && game.tech.darkweb,
+                virtual: game.resources.research >= 45 && game.tech.quantum
+            };
+            return requirements[tech] && !game.tech[tech];
+        }
+
+        // 研究科技
+        function researchTech(tech) {
+            if (!canResearchTech(tech)) return;
+            
+            const costs = {
+                ai: 10,
+                quantum: 25,
+                neural: 20,
+                darkweb: 15,
+                nanotech: 40,
+                singularity: 100,
+                biotech: 30,
+                cyberwar: 35,
+                virtual: 45
+            };
+            
+            game.resources.research -= costs[tech];
+            game.tech[tech] = true;
+            
+            // 应用科技效果
+            switch(tech) {
+                case 'ai':
+                    addLog("AI系统已上线，自动化功能解锁");
+                    unlockMission('start');
+                    break;
+                case 'quantum':
+                    game.resources.maxCompute *= 3;
+                    game.stability -= 20;
+                    addLog("量子计算技术已激活 - 算力上限大幅提升，但系统稳定性下降");
+                    unlockAchievement('quantum');
+                    break;
+                case 'neural':
+                    addLog("神经链接已建立 - 资源获取速度提升");
+                    break;
+                case 'darkweb':
+                    addLog("暗网接入成功 - 高风险交易选项已解锁");
+                    break;
+                case 'nanotech':
+                    addLog("纳米科技已部署 - 设施效率提升");
+                    break;
+                case 'singularity':
+                    game.stability -= 40;
+                    addLog("警告: 技术奇点已达成 - 系统极度不稳定");
+                    unlockAchievement('singularity');
+                    break;
+                case 'biotech':
+                    addLog("生物科技解锁 - 现在可以生产生物芯片");
+                    unlockMission('bio');
+                    break;
+                case 'cyberwar':
+                    addLog("网络战争协议激活 - DDoS攻击功能解锁");
+                    unlockMission('ddos');
+                    break;
+                case 'virtual':
+                    addLog("虚拟现实系统上线 - 赛博空间已开放");
+                    break;
+            }
+            
+            checkMission('research');
+            updateUI();
+            saveGame();
+        }
+
+        // 更新升级
+        function updateUpgrades() {
+            const upgrades = ['gen1', 'data1', 'quant1', 'firewall1', 'bio1', 'influence1'];
+            upgrades.forEach(upgrade => {
+                const element = document.getElementById(`upgrade-${upgrade}`);
+                if (game.upgrades[upgrade]) {
+                    element.classList.add('unlocked');
+                    element.classList.remove('locked');
+                } else {
+                    // 检查是否满足升级条件
+                    const canUpgrade = canBuyUpgrade(upgrade);
+                    element.classList.toggle('locked', !canUpgrade);
+                }
+            });
+        }
+
+        // 检查是否可以购买升级
+        function canBuyUpgrade(upgrade) {
+            const requirements = {
+                gen1: game.facilities.generators >= 1 && game.resources.credits >= 200,
+                data1: game.facilities.dataCenters >= 1 && game.resources.credits >= 300,
+                quant1: game.facilities.quantumComputers >= 1 && game.resources.credits >= 500,
+                firewall1: game.facilities.firewalls >= 1 && game.resources.data >= 400,
+                bio1: game.facilities.biochipLabs >= 1 && game.resources.credits >= 600,
+                influence1: game.facilities.influenceNodes >= 1 && game.resources.credits >= 800
+            };
+            return requirements[upgrade] && !game.upgrades[upgrade];
+        }
+
+        // 购买升级
+        function buyUpgrade(upgrade) {
+            if (!canBuyUpgrade(upgrade)) return;
+            
+            const costs = {
+                gen1: { credits: 200 },
+                data1: { credits: 300 },
+                quant1: { credits: 500 },
+                firewall1: { data: 400 },
+                bio1: { credits: 600 },
+                influence1: { credits: 800 }
+            };
+            
+            if (costs[upgrade].credits) game.resources.credits -= costs[upgrade].credits;
+            if (costs[upgrade].data) game.resources.data -= costs[upgrade].data;
+            
+            game.upgrades[upgrade] = true;
+            
+            // 应用升级效果
+            switch(upgrade) {
+                case 'gen1':
+                    game.rates.energy += game.facilities.generators * 0.25;
+                    addLog("能源发生器升级完成 - 能源产出增加");
+                    break;
+                case 'data1':
+                    game.rates.data += game.facilities.dataCenters * 0.15;
+                    addLog("数据中心升级完成 - 数据处理能力提升");
+                    break;
+                case 'quant1':
+                    addLog("量子优化完成 - 算力效率提高");
+                    break;
+                case 'firewall1':
+                    game.stability += 10;
+                    addLog("高级防火墙已部署 - 系统安全性提升");
+                    checkMission('hack');
+                    break;
+                case 'bio1':
+                    game.rates.biochips += game.facilities.biochipLabs * 0.1;
+                    addLog("生物芯片优化完成 - 生产效率提升");
+                    break;
+                case 'influence1':
+                    game.rates.influence += game.facilities.influenceNodes * 0.2;
+                    addLog("影响力放大器安装完成 - 网络影响力增长加速");
+                    break;
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        // 更新任务
+        function updateMissions() {
+            const missions = ['start', 'research', 'hack', 'bio', 'ddos', 'stability'];
+            missions.forEach(mission => {
+                const element = document.getElementById(`mission-${mission}`);
+                if (game.missions[mission]) {
+                    element.classList.add('completed');
+                } else {
+                    element.classList.remove('completed');
+                }
+            });
+        }
+
+        // 解锁任务
+        function unlockMission(mission) {
+            if (!game.missions[mission]) {
+                const element = document.getElementById(`mission-${mission}`);
+                element.style.display = 'block';
+            }
+        }
+
+        // 检查任务完成
+        function checkMission(mission) {
+            if (game.missions[mission]) return;
+            
+            let completed = false;
+            switch(mission) {
+                case 'start':
+                    completed = game.facilities.generators > 0;
+                    if (completed) {
+                        game.resources.credits += 50;
+                        addLog("任务完成: 新手入门 - 获得50信用点");
+                    }
+                    break;
+                case 'research':
+                    let researched = 0;
+                    for (const tech in game.tech) {
+                        if (game.tech[tech]) researched++;
+                    }
+                    completed = researched >= 3;
+                    if (completed) {
+                        game.resources.research += 20;
+                        addLog("任务完成: 科研先锋 - 获得20研究点数");
+                    }
+                    break;
+                case 'hack':
+                    completed = game.upgrades.firewall1;
+                    if (completed) {
+                        addLog("任务完成: 网络安全 - 获得防火墙升级");
+                    }
+                    break;
+                case 'bio':
+                    completed = game.resources.biochips >= 50;
+                    if (completed) {
+                        game.resources.research += 15;
+                        addLog("任务完成: 生物黑客 - 获得15研究点数");
+                    }
+                    break;
+                case 'ddos':
+                    completed = game.stats.ddosLaunched >= 5;
+                    if (completed) {
+                        game.resources.influence += 100;
+                        addLog("任务完成: 网络战争 - 获得100影响力");
+                    }
+                    break;
+                case 'stability':
+                    // 在游戏循环中检查
+                    break;
+            }
+            
+            if (completed) {
+                game.missions[mission] = true;
+                updateUI();
+                saveGame();
+            }
+        }
+
+        // 更新成就
+        function updateAchievements() {
+            const achievements = ['start', 'hack', 'overload', 'quantum', 'singularity', 'bio', 'ddos', 'virus', 'cyberspace', 'time'];
+            achievements.forEach(achieve => {
+                const element = document.getElementById(`achieve-${achieve}`);
+                if (game.achievements[achieve]) {
+                    element.classList.add('unlocked');
+                }
+            });
+        }
+
+        // 解锁成就
+        function unlockAchievement(achieve) {
+            if (!game.achievements[achieve]) {
+                game.achievements[achieve] = true;
+                addLog(`成就解锁: ${getAchievementName(achieve)}`);
+                game.resources.reputation += 50;
+                updateUI();
+                saveGame();
+            }
+        }
+
+        // 获取成就名称
+        function getAchievementName(achieve) {
+            const names = {
+                start: "初次启动",
+                hack: "防火墙测试",
+                overload: "冷静应对",
+                quantum: "量子跃迁",
+                singularity: "奇点临近",
+                bio: "生化电子人",
+                ddos: "网络恐怖分子",
+                virus: "杀毒专家",
+                cyberspace: "数字幽灵",
+                time: "时间领主"
+            };
+            return names[achieve];
+        }
+
+        // 更新义体改造
+        function updateCybernetics() {
+            const cybernetics = ['neural', 'memory', 'reflex', 'stability', 'ai'];
+            cybernetics.forEach(cyber => {
+                const element = document.getElementById(`cyber-${cyber}`);
+                if (game.cybernetics[cyber]) {
+                    element.classList.add('active');
+                } else {
+                    element.classList.remove('active');
+                    // 检查是否可以安装
+                    const canInstall = canInstallCyberware(cyber);
+                    element.classList.toggle('locked', !canInstall);
+                }
+            });
+            document.getElementById('biochips-cyber').textContent = Math.floor(game.resources.biochips);
+        }
+
+        // 检查是否可以安装义体
+        function canInstallCyberware(cyber) {
+            if (!game.tech.biotech) return false;
+            
+            const costs = {
+                neural: 10,
+                memory: 15,
+                reflex: 20,
+                stability: 25,
+                ai: 50
+            };
+            return game.resources.biochips >= costs[cyber] && !game.cybernetics[cyber];
+        }
+
+        // 安装义体
+        function installCyberware(cyber) {
+            if (!canInstallCyberware(cyber)) return;
+            
+            const costs = {
+                neural: 10,
+                memory: 15,
+                reflex: 20,
+                stability: 25,
+                ai: 50
+            };
+            
+            game.resources.biochips -= costs[cyber];
+            game.cybernetics[cyber] = true;
+            
+            // 应用义体效果
+            switch(cyber) {
+                case 'neural':
+                    addLog("神经加速器安装完成 - 操作速度提升");
+                    break;
+                case 'memory':
+                    addLog("记忆增强器安装完成 - 研究效率提升");
+                    break;
+                case 'reflex':
+                    addLog("反射增强器安装完成 - 事件反应时间延长");
+                    break;
+                case 'stability':
+                    game.stability += 15;
+                    addLog("系统稳定器安装完成 - 系统稳定性提升");
+                    break;
+                case 'ai':
+                    addLog("AI协同处理器安装完成 - 自动化效率提升");
+                    break;
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        // 更新企业关系
+        function updateCorporations() {
+            const corporations = ['neura', 'quant', 'cyber'];
+            corporations.forEach(corp => {
+                const element = document.getElementById(`corp-${corp}`);
+                if (game.corporations[corp]) {
+                    element.classList.add('unlocked');
+                    element.querySelector('button').style.display = 'none';
+                } else {
+                    element.classList.remove('unlocked');
+                    element.querySelector('button').style.display = 'inline-block';
+                    // 检查是否可以解锁
+                    const canUnlock = canUnlockCorporation(corp);
+                    element.querySelector('button').disabled = !canUnlock;
+                }
+            });
+            document.getElementById('reputation-corps').textContent = Math.floor(game.resources.reputation);
+        }
+
+        // 检查是否可以解锁企业
+        function canUnlockCorporation(corp) {
+            const requirements = {
+                neura: game.resources.reputation >= 500,
+                quant: game.resources.reputation >= 800,
+                cyber: game.resources.reputation >= 1200
+            };
+            return requirements[corp] && !game.corporations[corp];
+        }
+
+        // 解锁企业
+        function unlockCorporation(corp) {
+            if (!canUnlockCorporation(corp)) return;
+            
+            game.corporations[corp] = true;
+            
+            // 应用企业效果
+            switch(corp) {
+                case 'neura':
+                    game.rates.biochips += 0.2;
+                    addLog("已与NeuraLink科技建立合作关系 - 生物芯片生产提升");
+                    break;
+                case 'quant':
+                    game.resources.maxCompute += 100;
+                    addLog("已与Quantum Dynamics建立合作关系 - 算力上限提升");
+                    break;
+                case 'cyber':
+                    game.stability += 20;
+                    addLog("已与CyberSys安全建立合作关系 - 系统稳定性提升");
+                    break;
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        // 更新赛博空间
+        function updateCyberspace() {
+            document.getElementById('influence-cyber').textContent = Math.floor(game.resources.influence);
+            
+            // 渲染赛博空间视图
+            const cyberspace = document.getElementById('cyberspace-view');
+            cyberspace.innerHTML = '';
+            
+            // 创建节点和连接
+            if (game.cyberspaceNodes.length === 0) {
+                generateCyberspace();
+            }
+            
+            game.cyberspaceNodes.forEach(node => {
+                const element = document.createElement('div');
+                element.className = 'data-node';
+                element.style.left = `${node.x}%`;
+                element.style.top = `${node.y}%`;
+                element.style.backgroundColor = node.locked ? 'var(--neon-green)' : 'var(--neon-blue)';
+                cyberspace.appendChild(element);
+            });
+            
+            game.cyberspaceLinks.forEach(link => {
+                const element = document.createElement('div');
+                element.className = 'data-link';
+                const x1 = game.cyberspaceNodes[link.from].x;
+                const y1 = game.cyberspaceNodes[link.from].y;
+                const x2 = game.cyberspaceNodes[link.to].x;
+                const y2 = game.cyberspaceNodes[link.to].y;
+                
+                const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+                
+                element.style.width = `${length}%`;
+                element.style.left = `${x1}%`;
+                element.style.top = `${y1}%`;
+                element.style.transform = `rotate(${angle}deg)`;
+                
+                cyberspace.appendChild(element);
+            });
+        }
+
+        // 生成赛博空间节点
+        function generateCyberspace() {
+            game.cyberspaceNodes = [];
+            game.cyberspaceLinks = [];
+            
+            // 创建5-8个随机节点
+            const nodeCount = 5 + Math.floor(Math.random() * 4);
+            for (let i = 0; i < nodeCount; i++) {
+                game.cyberspaceNodes.push({
+                    x: 10 + Math.random() * 80,
+                    y: 10 + Math.random() * 80,
+                    locked: false,
+                    value: 10 + Math.floor(Math.random() * 40)
+                });
+            }
+            
+            // 创建连接
+            for (let i = 0; i < nodeCount - 1; i++) {
+                game.cyberspaceLinks.push({
+                    from: i,
+                    to: i + 1
+                });
+            }
+            
+            // 随机添加一些额外连接
+            const extraLinks = Math.floor(Math.random() * 3);
+            for (let i = 0; i < extraLinks; i++) {
+                const from = Math.floor(Math.random() * nodeCount);
+                let to;
+                do {
+                    to = Math.floor(Math.random() * nodeCount);
+                } while (to === from);
+                
+                game.cyberspaceLinks.push({
+                    from,
+                    to
+                });
+            }
+        }
+
+        // 探索赛博空间
+        function exploreCyberspace() {
+            if (!game.tech.virtual) {
+                addLog("错误: 需要先研究虚拟现实技术");
+                return;
+            }
+            
+            if (game.resources.influence < 10) {
+                addLog("错误: 需要至少10影响力");
+                return;
+            }
+            
+            game.resources.influence -= 10;
+            game.stats.cyberspaceEntered++;
+            
+            // 随机奖励
+            const rewardType = Math.floor(Math.random() * 4);
+            let rewardAmount, rewardMessage;
+            
+            switch(rewardType) {
+                case 0:
+                    rewardAmount = 5 + Math.floor(Math.random() * 10);
+                    game.resources.data += rewardAmount;
+                    rewardMessage = `发现数据缓存: +${rewardAmount} 数据碎片`;
+                    break;
+                case 1:
+                    rewardAmount = 3 + Math.floor(Math.random() * 7);
+                    game.resources.research += rewardAmount;
+                    rewardMessage = `发现研究数据: +${rewardAmount} 研究点数`;
+                    break;
+                case 2:
+                    rewardAmount = 1 + Math.floor(Math.random() * 3);
+                    game.resources.biochips += rewardAmount;
+                    rewardMessage = `发现生物芯片: +${rewardAmount} 生物芯片`;
+                    break;
+                case 3:
+                    rewardAmount = 10 + Math.floor(Math.random() * 20);
+                    game.resources.influence += rewardAmount;
+                    rewardMessage = `网络影响力提升: +${rewardAmount} 影响力`;
+                    break;
+            }
+            
+            addLog(`赛博空间探索完成. ${rewardMessage}`);
+            
+            // 成就检查
+            if (game.stats.cyberspaceEntered >= 10) {
+                unlockAchievement('cyberspace');
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        // 入侵企业网络
+        function hackCorporation() {
+            if (!game.tech.virtual) {
+                addLog("错误: 需要先研究虚拟现实技术");
+                return;
+            }
+            
+            if (game.resources.influence < 50) {
+                addLog("错误: 需要至少50影响力");
+                return;
+            }
+            
+            // 检查是否解锁了企业
+            const unlockedCorps = [];
+            if (game.corporations.neura) unlockedCorps.push('neura');
+            if (game.corporations.quant) unlockedCorps.push('quant');
+            if (game.corporations.cyber) unlockedCorps.push('cyber');
+            
+            if (unlockedCorps.length === 0) {
+                addLog("错误: 需要先与至少一家企业建立联系");
+                return;
+            }
+            
+            game.resources.influence -= 50;
+            
+            // 随机选择一家企业
+            const corp = unlockedCorps[Math.floor(Math.random() * unlockedCorps.length)];
+            let reward, message;
+            
+            switch(corp) {
+                case 'neura':
+                    reward = 2 + Math.floor(Math.random() * 3);
+                    game.resources.biochips += reward;
+                    message = `成功入侵NeuraLink网络: 获得${reward}生物芯片`;
+                    break;
+                case 'quant':
+                    reward = 20 + Math.floor(Math.random() * 30);
+                    game.resources.compute += reward;
+                    message = `成功入侵Quantum Dynamics网络: 获得${reward}算力`;
+                    break;
+                case 'cyber':
+                    reward = 5 + Math.floor(Math.random() * 10);
+                    game.stability += reward;
+                    message = `成功入侵CyberSys安全网络: 系统稳定性+${reward}%`;
+                    break;
+            }
+            
+            addLog(message);
+            updateUI();
+            saveGame();
+        }
+
+        // 防御网络节点
+        function defendNode() {
+            if (!game.tech.virtual) {
+                addLog("错误: 需要先研究虚拟现实技术");
+                return;
+            }
+            
+            if (game.resources.influence < 30) {
+                addLog("错误: 需要至少30影响力");
+                return;
+            }
+            
+            startCodeMinigame();
+        }
+
+        // 启动代码小游戏
+        function startCodeMinigame() {
+            game.minigameActive = true;
+            document.getElementById('minigame-container').style.display = 'flex';
+            
+            // 生成代码
+            const codeDisplay = document.getElementById('code-display');
+            codeDisplay.innerHTML = '';
+            
+            const lines = [
+                "function processData(data) {",
+                "  let result = [];",
+                "  for (let i = 0; i < data.length; i++) {",
+                "    if (data[i] > threshold) {",
+                "      result.push(data[i] * factor);",
+                "    } else {",
+                "      result.push(data[i]);",
+                "    }",
+                "  }",
+                "  return result;",
+                "}"
+            ];
+            
+            // 随机选择1-3行作为错误行
+            const errorLines = [];
+            const errorCount = 1 + Math.floor(Math.random() * 3);
+            while (errorLines.length < errorCount) {
+                const line = 2 + Math.floor(Math.random() * (lines.length - 3)); // 避开第一行和最后一行
+                if (!errorLines.includes(line)) {
+                    errorLines.push(line);
+                }
+            }
+            
+            // 显示代码
+            lines.forEach((line, index) => {
+                const div = document.createElement('div');
+                div.className = 'code-line';
+                div.textContent = line;
+                div.dataset.line = index;
+                if (errorLines.includes(index)) {
+                    div.dataset.error = 'true';
+                    // 随机修改这行代码
+                    const parts = line.split(' ');
+                    const randomIndex = Math.floor(Math.random() * parts.length);
+                    parts[randomIndex] = '#' + parts[randomIndex] + '#';
+                    div.textContent = parts.join(' ');
+                }
+                codeDisplay.appendChild(div);
+            });
+            
+            // 生成错误选项
+            const errorContainer = document.getElementById('code-errors');
+            errorContainer.innerHTML = '';
+            
+            // 添加正确错误行
+            errorLines.forEach(line => {
+                const button = document.createElement('button');
+                button.textContent = `第 ${line + 1} 行`;
+                button.onclick = function() {
+                    // 高亮显示错误行
+                    document.querySelector(`.code-line[data-line="${line}"]`).classList.add('error');
+                    button.disabled = true;
+                    
+                    // 检查是否找出了所有错误
+                    const remainingErrors = document.querySelectorAll('.code-line[data-error="true"]:not(.error)');
+                    if (remainingErrors.length === 0) {
+                        // 成功防御
+                        const reward = 50 + Math.floor(Math.random() * 50);
+                        game.resources.influence += reward;
+                        addLog(`成功防御网络攻击! 获得${reward}影响力`);
+                        closeMinigame();
+                    }
+                };
+                errorContainer.appendChild(button);
+            });
+            
+            // 添加一些干扰项
+            const fakeErrorCount = 3;
+            for (let i = 0; i < fakeErrorCount; i++) {
+                let fakeLine;
+                do {
+                    fakeLine = 2 + Math.floor(Math.random() * (lines.length - 3));
+                } while (errorLines.includes(fakeLine));
+                
+                const button = document.createElement('button');
+                button.textContent = `第 ${fakeLine + 1} 行`;
+                button.onclick = function() {
+                    // 错误选择惩罚
+                    game.stability -= 5;
+                    addLog("错误选择! 系统稳定性下降");
+                    button.disabled = true;
+                    checkStability();
+                };
+                errorContainer.appendChild(button);
+            }
+        }
+
+        // 关闭小游戏
+        function closeMinigame() {
+            game.minigameActive = false;
+            document.getElementById('minigame-container').style.display = 'none';
+            updateUI();
+            saveGame();
+        }
+
+        // 添加日志
+        function addLog(message) {
+            const log = document.getElementById('log');
+            const entry = document.createElement('p');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 清除日志
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<p>日志已清除</p>';
+        }
+
+        // 切换标签页
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+
+        // 购买设施
+        function buyGenerator() {
+            if (game.resources.credits >= 50) {
+                game.resources.credits -= 50;
+                game.facilities.generators++;
+                game.rates.energy += 0.5;
+                if (game.upgrades.gen1) game.rates.energy += 0.25;
+                addLog("能源发生器建造完成");
+                if (game.facilities.generators === 1) {
+                    unlockAchievement('start');
+                    checkMission('start');
+                }
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 信用点不足");
+            }
+        }
+
+        function buyDataCenter() {
+            if (game.resources.credits >= 100) {
+                game.resources.credits -= 100;
+                game.facilities.dataCenters++;
+                game.rates.data += 0.3;
+                if (game.upgrades.data1) game.rates.data += 0.15;
+                addLog("数据中心建造完成");
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 信用点不足");
+            }
+        }
+
+        function buyQuantumComputer() {
+            if (game.resources.credits >= 500) {
+                game.resources.credits -= 500;
+                game.facilities.quantumComputers++;
+                game.resources.maxCompute += 50;
+                if (game.upgrades.quant1) game.resources.maxCompute += 25;
+                addLog("量子计算机上线");
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 信用点不足");
+            }
+        }
+
+        function buyFirewall() {
+            if (game.resources.data >= 200) {
+                game.resources.data -= 200;
+                game.facilities.firewalls++;
+                addLog("防火墙升级完成");
+                if (game.upgrades.firewall1) game.stability += 10;
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 数据碎片不足");
+            }
+        }
+
+        function buyBiochipLab() {
+            if (!game.tech.biotech) {
+                addLog("错误: 需要先研究生物科技");
+                return;
+            }
+            
+            if (game.resources.credits >= 1000) {
+                game.resources.credits -= 1000;
+                game.facilities.biochipLabs++;
+                game.rates.biochips += 0.1;
+                if (game.upgrades.bio1) game.rates.biochips += 0.05;
+                addLog("生物芯片实验室建造完成");
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 信用点不足");
+            }
+        }
+
+        function buyInfluenceNode() {
+            if (!game.tech.virtual) {
+                addLog("错误: 需要先研究虚拟现实技术");
+                return;
+            }
+            
+            if (game.resources.credits >= 500 && game.resources.data >= 200) {
+                game.resources.credits -= 500;
+                game.resources.data -= 200;
+                game.facilities.influenceNodes++;
+                game.rates.influence += 0.2;
+                if (game.upgrades.influence1) game.rates.influence += 0.1;
+                addLog("影响力节点部署完成");
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 资源不足");
+            }
+        }
+
+        // 玩家行动
+        function harvestEnergy() {
+            const amount = 5 + (game.tech.neural ? 3 : 0) + (game.cybernetics.neural ? 2 : 0);
+            game.resources.energy += amount;
+            addLog(`收集了 ${amount} 单位能源`);
+            updateUI();
+            saveGame();
+        }
+
+        function mineData() {
+            const amount = 3 + (game.tech.neural ? 2 : 0) + (game.cybernetics.neural ? 1 : 0);
+            game.resources.data += amount;
+            addLog(`挖掘了 ${amount} 数据碎片`);
+            updateUI();
+            saveGame();
+        }
+
+        function runComputation() {
+            if (game.resources.compute < game.resources.maxCompute) {
+                const amount = 10 + (game.tech.quantum ? 5 : 0) + (game.cybernetics.neural ? 3 : 0);
+                game.resources.compute = Math.min(game.resources.compute + amount, game.resources.maxCompute);
+                addLog(`执行了计算任务 (+${amount} 算力)`);
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 算力已达上限");
+            }
+        }
+
+        function sellData() {
+            if (game.resources.data >= 10) {
+                const amount = Math.floor(game.resources.data / 10);
+                game.resources.data -= amount * 10;
+                game.resources.credits += amount;
+                addLog(`出售了 ${amount * 10} 数据碎片，获得 ${amount} 信用点`);
+                updateUI();
+                saveGame();
+            } else {
+                addLog("错误: 数据碎片不足 (需要至少10)");
+            }
+        }
+
+        function buyCredits() {
+            if (!game.tech.darkweb) {
+                addLog("错误: 需要先研究暗网接入技术");
+                return;
+            }
+            
+            // 高风险交易
+            const success = Math.random() > 0.3;
+            if (success) {
+                const amount = 50 + Math.floor(Math.random() * 100);
+                game.resources.credits += amount;
+                addLog(`黑市交易成功! 获得 ${amount} 信用点`);
+            } else {
+                // 交易失败惩罚
+                const lost = Math.min(50, game.resources.credits);
+                game.resources.credits -= lost;
+                game.stability -= 10;
+                addLog(`黑市交易失败! 损失 ${lost} 信用点，系统稳定性下降`);
+                checkStability();
+            }
+            updateUI();
+            saveGame();
+        }
+
+        function launchDDoS() {
+            if (!game.tech.cyberwar) {
+                addLog("错误: 需要先研究网络战争技术");
+                return;
+            }
+            
+            if (game.resources.influence < 20) {
+                addLog("错误: 需要至少20影响力");
+                return;
+            }
+            
+            game.resources.influence -= 20;
+            game.stats.ddosLaunched++;
+            
+            // 随机奖励
+            const rewardType = Math.floor(Math.random() * 3);
+            let rewardAmount, rewardMessage;
+            
+            switch(rewardType) {
+                case 0:
+                    rewardAmount = 10 + Math.floor(Math.random() * 20);
+                    game.resources.data += rewardAmount;
+                    rewardMessage = `窃取数据: +${rewardAmount} 数据碎片`;
+                    break;
+                case 1:
+                    rewardAmount = 5 + Math.floor(Math.random() * 10);
+                    game.resources.credits += rewardAmount;
+                    rewardMessage = `勒索成功: +${rewardAmount} 信用点`;
+                    break;
+                case 2:
+                    rewardAmount = 15;
+                    game.resources.influence += rewardAmount;
+                    rewardMessage = `网络影响力提升: +${rewardAmount} 影响力`;
+                    break;
+            }
+            
+            addLog(`DDoS攻击完成. ${rewardMessage}`);
+            
+            // 成就检查
+            if (game.stats.ddosLaunched >= 10) {
+                unlockAchievement('ddos');
+            }
+            
+            // 任务检查
+            checkMission('ddos');
+            
+            updateUI();
+            saveGame();
+        }
+
+        function startVirusScan() {
+            if (game.virusActive || game.gameOver) return;
+            
+            // 随机触发病毒事件
+            const virusChance = 0.02;
+            if (Math.random() < virusChance) {
+                game.virusActive = true;
+                game.virusTime = 15;
+                
+                // 显示事件面板
+                document.getElementById('virus-event').style.display = 'block';
+                
+                // 开始扫描动画
+                let scanPos = 0;
+                const scanInterval = setInterval(() => {
+                    scanPos = (scanPos + 2 + Math.random() * 5) % 100;
+                    document.getElementById('virus-scan-pointer').style.left = `${scanPos}%`;
+                    
+                    game.virusTime--;
+                    document.getElementById('virus-timer').textContent = `倒计时: ${game.virusTime}秒`;
+                    
+                    if (game.virusTime <= 0) {
+                        clearInterval(scanInterval);
+                        resolveVirus(false);
+                    }
+                }, 1000);
+            } else {
+                addLog("病毒扫描完成: 未发现威胁");
+            }
+        }
+
+        function scanVirus() {
+            if (game.virusActive) {
+                const pointer = document.getElementById('virus-scan-pointer');
+                const pos = parseFloat(pointer.style.left || '0');
+                
+                if (pos >= 70 && pos <= 90) { // 绿色区域
+                    game.virusActive = false;
+                    document.getElementById('virus-event').style.display = 'none';
+                    addLog("病毒清除成功! 系统恢复");
+                    game.stats.virusesCleaned++;
+                    
+                    // 成就检查
+                    if (game.stats.virusesCleaned >= 5) {
+                        unlockAchievement('virus');
+                    }
+                } else {
+                    game.stability -= 5;
+                    addLog("病毒清除失败! 系统受损");
+                    checkStability();
+                }
+                
+                updateUI();
+                saveGame();
+            }
+        }
+
+        function enterCyberspace() {
+            if (!game.tech.virtual) {
+                addLog("错误: 需要先研究虚拟现实技术");
+                return;
+            }
+            
+            if (game.resources.compute < 30) {
+                addLog("错误: 需要至少30算力");
+                return;
+            }
+            
+            game.resources.compute -= 30;
+            game.stats.cyberspaceEntered++;
+            
+            // 随机奖励
+            const rewardType = Math.floor(Math.random() * 3);
+            let rewardAmount, rewardMessage;
+            
+            switch(rewardType) {
+                case 0:
+                    rewardAmount = 5 + Math.floor(Math.random() * 10);
+                    game.resources.research += rewardAmount;
+                    rewardMessage = `发现研究数据: +${rewardAmount} 研究点数`;
+                    break;
+                case 1:
+                    rewardAmount = 1 + Math.floor(Math.random() * 3);
+                    game.resources.biochips += rewardAmount;
+                    rewardMessage = `发现生物芯片: +${rewardAmount} 生物芯片`;
+                    break;
+                case 2:
+                    rewardAmount = 10 + Math.floor(Math.random() * 20);
+                    game.resources.influence += rewardAmount;
+                    rewardMessage = `网络影响力提升: +${rewardAmount} 影响力`;
+                    break;
+            }
+            
+            addLog(`赛博空间探索完成. ${rewardMessage}`);
+            
+            // 成就检查
+            if (game.stats.cyberspaceEntered >= 10) {
+                unlockAchievement('cyberspace');
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        // 事件系统
+        function triggerHackEvent() {
+            if (game.hackActive || game.gameOver || game.minigameActive) return;
+            
+            // 防火墙减少黑客几率
+            let hackChance = 0.01 * (1 - (game.facilities.firewalls * 0.1));
+            if (game.tech.neural) hackChance *= 1.3; // 神经链接增加风险
+            if (game.tech.darkweb) hackChance *= 1.4; // 暗网接入增加风险
+            
+            if (Math.random() < hackChance) {
+                game.hackActive = true;
+                game.hackTime = 10 + (game.cybernetics.reflex ? 2 : 0);
+                
+                // 生成随机代码
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let code = '';
+                for (let i = 0; i < 6; i++) {
+                    code += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                document.getElementById('hack-code').textContent = code;
+                document.getElementById('hack-input').value = '';
+                
+                // 显示事件面板
+                document.getElementById('hack-event').style.display = 'block';
+                
+                // 开始倒计时
+                const hackInterval = setInterval(() => {
+                    game.hackTime--;
+                    document.getElementById('hack-timer').textContent = `剩余时间: ${game.hackTime}秒`;
+                    
+                    if (game.hackTime <= 0) {
+                        clearInterval(hackInterval);
+                        resolveHack(false);
+                    }
+                }, 1000);
+            }
+        }
+
+        function resolveHack(success) {
+            game.hackActive = false;
+            document.getElementById('hack-event').style.display = 'none';
+            
+            if (success) {
+                const input = document.getElementById('hack-input').value.toUpperCase();
+                const code = document.getElementById('hack-code').textContent;
+                
+                if (input === code) {
+                    addLog("黑客攻击已成功抵御!");
+                    game.stats.hackDefended++;
+                    game.resources.research += 5;
+                    
+                    // 成就检查
+                    if (game.stats.hackDefended >= 1) {
+                        unlockAchievement('hack');
+                        checkMission('hack');
+                    }
+                } else {
+                    addLog("验证失败! 部分数据丢失");
+                    game.resources.data = Math.max(0, game.resources.data - 20);
+                    game.stability -= 10;
+                    checkStability();
+                }
+            } else {
+                addLog("黑客攻击成功! 系统受损");
+                game.resources.energy = Math.max(0, game.resources.energy - 30);
+                game.stability -= 15;
+                checkStability();
+            }
+            
+            updateUI();
+            saveGame();
+        }
+
+        function triggerOverloadEvent() {
+            if (game.overloadActive || game.gameOver || game.minigameActive) return;
+            
+            // 高算力使用时更易过载
+            let overloadChance = (game.resources.compute / game.resources.maxCompute) * 0.02;
+            if (game.tech.quantum) overloadChance *= 1.5; // 量子计算增加风险
+            if (game.tech.singularity) overloadChance *= 2; // 技术奇点大幅增加风险
+            
+            if (Math.random() < overloadChance) {
+                game.overloadActive = true;
+                game.overloadTime = 10 + (game.cybernetics.reflex ? 2 : 0);
+                
+                // 显示事件面板
+                document.getElementById('overload-event').style.display = 'block';
+                
+                // 开始过载动画
+                let overload = 0;
+                const overloadInterval = setInterval(() => {
+                    overload = (overload + 10 + Math.random() * 20) % 100;
+                    document.getElementById('overload-bar').style.width = `${overload}%`;
+                    
+                    game.overloadTime--;
+                    document.getElementById('overload-timer').textContent = `倒计时: ${game.overloadTime}秒`;
+                    
+                    if (game.overloadTime <= 0) {
+                        clearInterval(overloadInterval);
+                        resolveOverload(false);
+                    }
+                }, 1000);
+            }
+        }
+
+        function coolSystem() {
+            if (game.overloadActive) {
+                game.overloadActive = false;
+                document.getElementById('overload-event').style.display = 'none';
+                addLog("紧急降温成功! 系统恢复稳定");
+                game.stats.overloadPrevented++;
+                game.resources.compute = Math.max(0, game.resources.compute - 20);
+                
+                // 成就检查
+                if (game.stats.overloadPrevented >= 1) {
+                    unlockAchievement('overload');
+                }
+                
+                updateUI();
+                saveGame();
+            }
+        }
+
+        function resolveOverload(success) {
+            game.overloadActive = false;
+            document.getElementById('overload-event').style.display = 'none';
+            
+            if (!success) {
+                addLog("系统过载崩溃!");
+                game.stability -= 30;
+                game.resources.compute = 0;
+                checkStability();
+                updateUI();
+                saveGame();
+            }
+        }
+
+        function resolveVirus(success) {
+            game.virusActive = false;
+            document.getElementById('virus-event').style.display = 'none';
+            
+            if (!success) {
+                addLog("病毒清除失败! 系统严重受损");
+                game.stability -= 25;
+                game.resources.data = Math.max(0, game.resources.data - 50);
+                checkStability();
+                updateUI();
+                saveGame();
+            }
+        }
+
+        // 检查系统稳定性
+        function checkStability() {
+            if (game.stability <= 0) {
+                game.gameOver = true;
+                addLog("致命错误: 系统完全崩溃!");
+                document.getElementById('game-over').style.display = 'block';
+            }
+            
+            // 检查稳定性任务
+            if (game.stability > 80) {
+                if (game.stats.lastStabilityCheck === 0) {
+                    game.stats.lastStabilityCheck = Date.now();
+                } else {
+                    const stableTime = (Date.now() - game.stats.lastStabilityCheck) / 1000;
+                    if (stableTime >= 300) { // 5分钟
+                        checkMission('stability');
+                    }
+                }
+            } else {
+                game.stats.lastStabilityCheck = 0;
+            }
+        }
+
+        // 游戏主循环
+        function gameLoop() {
+            const now = Date.now();
+            const delta = (now - game.lastUpdate) / 1000; // 转换为秒
+            game.lastUpdate = now;
+            
+            if (game.gameOver) return;
+            
+            // 更新游戏时间
+            game.stats.playTime += delta;
+            
+            // 成就检查: 游戏时间
+            if (game.stats.playTime >= 3600 && !game.achievements.time) {
+                unlockAchievement('time');
+            }
+            
+            // 生物芯片成就检查
+            if (game.resources.biochips >= 100 && !game.achievements.bio) {
+                unlockAchievement('bio');
+            }
+            
+            // 资源生产
+            if (game.facilities.generators > 0) {
+                game.resources.energy += game.rates.energy * delta;
+            }
+            
+            if (game.facilities.dataCenters > 0) {
+                game.resources.data += game.rates.data * delta;
+            }
+            
+            if (game.facilities.biochipLabs > 0) {
+                game.resources.biochips += game.rates.biochips * delta;
+            }
+            
+            if (game.facilities.influenceNodes > 0) {
+                game.resources.influence += game.rates.influence * delta;
+            }
+            
+            // 自动化
+            if (game.tech.ai) {
+                // 自动分配能源
+                if (document.getElementById('auto-energy').checked && game.resources.energy > 20) {
+                    game.resources.energy -= 20 * delta;
+                    game.resources.compute = Math.min(game.resources.compute + 5 * delta, game.resources.maxCompute);
+                }
+                
+                // 自动分析数据
+                if (document.getElementById('auto-data').checked && game.resources.data > 10) {
+                    game.resources.data -= 10 * delta;
+                    game.resources.research += 0.5 * delta * (game.cybernetics.memory ? 1.3 : 1);
+                }
+                
+                // 自动生产生物芯片
+                if (document.getElementById('auto-biochips').checked && game.resources.energy > 5 && game.tech.biotech) {
+                    game.resources.energy -= 5 * delta;
+                    game.resources.biochips += 0.1 * delta * (game.cybernetics.ai ? 1.4 : 1);
+                }
+            }
+            
+            // 随机事件
+            triggerHackEvent();
+            triggerOverloadEvent();
+            
+            updateUI();
+            saveGame();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 初始化游戏
+        window.onload = function() {
+            loadGame();
+            gameLoop();
+            
+            // 设置自动保存
+            setInterval(saveGame, 30000); // 每30秒自动保存
+            
+            // 绑定黑客输入事件
+            document.getElementById('hack-input').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    resolveHack(true);
+                }
+            });
+            
+            // 绑定存档导入
+            document.getElementById('import-save').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        Object.assign(game, data);
+                        updateUI();
+                        saveGame();
+                        addLog("存档已导入");
+                    } catch (err) {
+                        addLog("导入失败: 存档文件损坏");
+                    }
+                };
+                reader.readAsText(file);
+            });
+        };
+    </script>
+</body>
+</html>
